@@ -4,95 +4,95 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Robot Signs!</title>
-		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">
-		<style>
-			canvas {
-				height: 250px;
-				width: 100%;
-			}
-			.sectionsignature {
-				background-color: #FFFFFF;
-				border: 1px solid #00CEC8;
-				border-radius: 3px;
-				height: 250px;
-				width: 65%;
-				position: relative;
-				margin-bottom: 20px;
-			}
-		</style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">
+    <style>
+      canvas {
+        height: 250px;
+        width: 100%;
+      }
+      .sectionsignature {
+        background-color: #FFFFFF;
+        border: 1px solid #00CEC8;
+        border-radius: 3px;
+        height: 250px;
+        width: 65%;
+        position: relative;
+        margin-bottom: 20px;
+      }
+    </style>
   </head>
   <body>
   <section class="section" id="app">
     <div class="container">
       <h1 class="title">
         Robot Signs
-			</h1>
-			<button @click="convertArray" class="button is-primary">Array to Base64</button>
-			<br><br>
-			{{ sheets.length }}
-			<br><br>
-			<div class="sectionsignature">
-				<canvas></canvas>
-			</div>
+      </h1>
+      <button @click="convertArray" class="button is-primary">Array to Base64</button>
+      <br><br>
+      {{ sheets.length }}
+      <br><br>
+      <div class="sectionsignature">
+        <canvas></canvas>
+      </div>
     </div>
-	</section>
-	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-	<script src="./js/signature_pad.min.js"></script>
-	<script>
-		var app = new Vue({
-			el: '#app',
-			data: {
-				sheets: [],
-				canvas: null,
-				pad: null,
-			},
-			mounted() {
-				this.initSignature()
-				this.resizeCanvas()
-				this.getRecords()
-			},
-			methods: {
-				initSignature() {
-					this.canvas = document.querySelector('canvas')
-					this.pad = new SignaturePad(this.canvas)
-				},
-				resizeCanvas() {
-					let ratio = Math.max(window.devicePixelRatio || 1, 1)
-					this.canvas.width = this.canvas.offsetWidth * ratio
-					this.canvas.height = this.canvas.offsetHeight * ratio
-					this.canvas.getContext("2d").scale(ratio, ratio)
-					this.pad.clear()
-				},
-				getRecords() {
-					fetch('http://localhost:3000/api/sign_records')
-					.then(res => res.json())
-					.then(data => this.sheets = data)
-					.catch(error => console.error(error))
-				},
-				convertArray() {
-					for (var sheet of this.sheets) {
-						this.timeOutConvert(sheet.id, sheet.sign)
-					}
-				},
-				timeOutConvert(id, sign) {
-					setTimeout(() => {
-						this.pad.fromData(JSON.parse(sign))
-						var base64 = this.pad.toDataURL("image/svg+xml")
-						
-						fetch("https://bogota-sin-drogas-api.herokuapp.com/api/update_sign", {
-							method: "POST",
-							headers: {'Content-Type': 'application/json'},
-							body: JSON.stringify({ id: id, sign: base64 })
-						})
-						.then(res => res.text())
-						.then(data => console.log(data))
-						.catch(error => console.error(error))
-					
-						this.pad.clear()
-					}, 1500)
-				}
-			}
-		})
-	</script>
+  </section>
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+  <script src="./js/signature_pad.min.js"></script>
+  <script>
+    var app = new Vue({
+      el: '#app',
+      data: {
+        sheets: [],
+        canvas: null,
+        pad: null,
+      },
+      mounted() {
+        this.initSignature()
+        this.resizeCanvas()
+        this.getRecords()
+      },
+      methods: {
+        initSignature() {
+          this.canvas = document.querySelector('canvas')
+          this.pad = new SignaturePad(this.canvas)
+        },
+        resizeCanvas() {
+          let ratio = Math.max(window.devicePixelRatio || 1, 1)
+          this.canvas.width = this.canvas.offsetWidth * ratio
+          this.canvas.height = this.canvas.offsetHeight * ratio
+          this.canvas.getContext("2d").scale(ratio, ratio)
+          this.pad.clear()
+        },
+        getRecords() {
+          fetch('http://localhost:3000/api/sign_records')
+          .then(res => res.json())
+          .then(data => this.sheets = data)
+          .catch(error => console.error(error))
+        },
+        convertArray() {
+          for (var sheet of this.sheets) {
+            this.timeOutConvert(sheet.id, sheet.sign)
+          }
+        },
+        timeOutConvert(id, sign) {
+          setTimeout(() => {
+            this.pad.fromData(JSON.parse(sign))
+            var base64 = this.pad.toDataURL("image/svg+xml")
+            
+            fetch("https://bogota-sin-drogas-api.herokuapp.com/api/update_sign", {
+              method: "POST",
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({ id: id, sign: base64 })
+            })
+            .then(res => res.text())
+            .then(data => console.log(data))
+            .catch(error => console.error(error))
+          
+            this.pad.clear()
+          }, 1500)
+        }
+      }
+    })
+  </script>
   </body>
 </html>
