@@ -5,51 +5,88 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Robot Signs!</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.1/css/bulma.min.css">
-    <style>
-      canvas {
-        height: 250px;
-        width: 100%;
-      }
-      .sectionsignature {
-        background-color: #FFFFFF;
-        border: 1px solid #00CEC8;
-        border-radius: 3px;
-        height: 250px;
-        width: 65%;
-        position: relative;
-        margin-bottom: 20px;
-      }
-    </style>
   </head>
   <body>
-  <section class="section" id="app">
-    <div class="container">
-      <h1 class="title">Robot Signs</h1>
-      <button @click="convertArray" class="button is-primary">Array to Base64</button>
-      <br><br>
-      {{ sheets.length }}
-    </div>
-  </section>
-  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-  <script src="./js/signature_pad.min.js"></script>
-  <script>
-    var app = new Vue({
-      el: '#app',
-      data: {
-        sheets: [],
-      },
-      mounted() {
-        this.getRecords()
-      },
-      methods: {
-        getRecords() {
-          fetch('http://localhost:3000/api/sign_records')
-          .then(res => res.json())
-          .then(data => this.sheets = data)
-          .catch(error => console.error(error))
-        }
-      }
-    })
-  </script>
+		<section class="section" id="app">
+			<div class="container">
+				<h1 class="title">Robot Signs {{ sheets.length }}</h1>
+				<div v-for="(value, index) in sheets">
+					<button @click="convertImage(index)" onClick="this.disabled=true;" class="button is-primary">
+						ID: {{value.id}} - {{value.name}}
+					</button>
+					<br><br>
+				</div>
+			</div>
+		</section>
+		
+		<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+		<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+		<script>
+			var app = new Vue({
+				el: '#app',
+				data: {
+					sheets: [],
+				},
+				mounted() {
+					this.getRecords()
+				},
+				methods: {
+					getRecords() {
+						fetch('https://bogota-sin-drogas-api.herokuapp.com/api/sign_records')
+						.then(res => res.json())
+						.then(data => this.sheets = data)
+						.catch(error => console.error(error))
+					},
+					convertImage(i) {
+						var ImageURL = this.sheets[i].sign
+						var block = ImageURL.split(";")
+						var contentType = block[0].split(":")[1]
+						var realData = block[1].split(",")[1]
+						var blob = this.b64toBlob(realData, contentType)
+
+						var fd = new FormData()
+						fd.append("image", blob)
+						fd.append("id", this.sheets[i].id)
+
+						$.ajax({
+							url: "https://bogota-sin-drogas-api.herokuapp.com/api/base_to_image",
+							data: fd,
+							type: "POST",
+							contentType: false,
+							processData: false,
+							cache: false,
+							dataType: "json",
+							error: function(err){
+								console.error(err);
+							},
+							success: function(data){
+								console.log(data);
+							}
+						})
+
+					},
+					b64toBlob(b64Data, contentType, sliceSize) {
+						contentType = contentType || ''
+						sliceSize = sliceSize || 512
+
+						var byteCharacters = atob(b64Data)
+						var byteArrays = []
+
+						for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+							var slice = byteCharacters.slice(offset, offset + sliceSize)
+							var byteNumbers = new Array(slice.length)
+							for (var i = 0; i < slice.length; i++) {
+								byteNumbers[i] = slice.charCodeAt(i)
+							}
+							var byteArray = new Uint8Array(byteNumbers)
+							byteArrays.push(byteArray)
+						}
+
+						var blob = new Blob(byteArrays, {type: contentType})
+						return blob
+					}
+				}
+			})
+		</script>
   </body>
 </html>

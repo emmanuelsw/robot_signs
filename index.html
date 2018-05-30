@@ -22,75 +22,73 @@
     </style>
   </head>
   <body>
-  <section class="section" id="app">
-    <div class="container">
-      <h1 class="title">Robot Signs</h1>
-      <button @click="convertArray" class="button is-primary">Array to Base64</button>
-      <br><br>
-      {{ sheets.length }}
-      <br><br>
-      <div class="sectionsignature">
-        <canvas></canvas>
+    <section class="section" id="app">
+      <div class="container">
+        <h1 class="title">Robot Signs {{ sheets.length }}</h1>
+        <button @click="convertArray" class="button is-primary">Array to Base64</button>
+        <div class="sectionsignature">
+          <canvas></canvas>
+        </div>
       </div>
-    </div>
-  </section>
-  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-  <script src="./js/signature_pad.min.js"></script>
-  <script>
-    var app = new Vue({
-      el: '#app',
-      data: {
-        sheets: [],
-        canvas: null,
-        pad: null,
-      },
-      mounted() {
-        this.initSignature()
-        this.resizeCanvas()
-        this.getRecords()
-      },
-      methods: {
-        initSignature() {
-          this.canvas = document.querySelector('canvas')
-          this.pad = new SignaturePad(this.canvas)
+    </section>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="./js/signature_pad.min.js"></script>
+    <script>
+      var app = new Vue({
+        el: '#app',
+        data: {
+          sheets: [],
+          canvas: null,
+          pad: null,
         },
-        resizeCanvas() {
-          let ratio = Math.max(window.devicePixelRatio || 1, 1)
-          this.canvas.width = this.canvas.offsetWidth * ratio
-          this.canvas.height = this.canvas.offsetHeight * ratio
-          this.canvas.getContext("2d").scale(ratio, ratio)
-          this.pad.clear()
+        mounted() {
+          this.initSignature()
+          this.resizeCanvas()
+          this.getRecords()
         },
-        getRecords() {
-          fetch('http://localhost:3000/api/sign_records')
-          .then(res => res.json())
-          .then(data => this.sheets = data)
-          .catch(error => console.error(error))
-        },
-        convertArray() {
-          for (var sheet of this.sheets) {
-            this.timeOutConvert(sheet.id, sheet.sign)
-          }
-        },
-        timeOutConvert(id, sign) {
-          setTimeout(() => {
-            this.pad.fromData(JSON.parse(sign))
-            var base64 = this.pad.toDataURL("image/svg+xml")
-            
-            fetch("http://localhost:3000/api/update_sign", {
-              method: "POST",
-              headers: {'Content-Type': 'application/json'},
-              body: JSON.stringify({ id: id, sign: base64 })
-            })
-            .then(res => res.text())
-            .then(data => console.log(data))
-            .catch(error => console.error(error))
-          
+        methods: {
+          initSignature() {
+            this.canvas = document.querySelector('canvas')
+            this.pad = new SignaturePad(this.canvas)
+          },
+          resizeCanvas() {
+            let ratio = Math.max(window.devicePixelRatio || 1, 1)
+            this.canvas.width = this.canvas.offsetWidth * ratio
+            this.canvas.height = this.canvas.offsetHeight * ratio
+            this.canvas.getContext("2d").scale(ratio, ratio)
             this.pad.clear()
-          }, 1500)
+          },
+          getRecords() {
+            fetch('http://localhost:3000/api/sign_records')
+            .then(res => res.json())
+            .then(data => this.sheets = data)
+            .catch(error => console.error(error))
+          },
+          convertArray() {
+            for (var sheet of this.sheets) {
+              this.timeOutConvert(sheet.id, sheet.sign)
+            }
+          },
+          timeOutConvert(id, sign) {
+            setTimeout(() => {
+              this.pad.fromData(JSON.parse(sign))
+              var base64 = this.pad.toDataURL("image/svg+xml")
+              
+              fetch("http://localhost:3000/api/update_sign", {
+                method: "POST",
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id: id, sign: base64 })
+              })
+              .then(res => res.text())
+              .then(data => console.log(data))
+              .catch(error => console.error(error))
+            
+              this.pad.clear()
+            }, 1500)
+          }
         }
-      }
-    })
-  </script>
+      })
+    </script>
   </body>
 </html>
